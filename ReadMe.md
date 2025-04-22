@@ -109,7 +109,7 @@ This section showcases the key technologies, frameworks, and tools that power bo
 | AWS-EC2     | [![AWS][AWS]][AWS-url]            | Backend Cloud Server             |
 | Vercel     | [![Vercel][Vercel]][Vercel-url]            | Frontend Server             |
 | AWS-S3     | [![S3][S3]][S3-url]            | Storage             |
-| Supabase-S3     | [![Supabase][Supabase]][Supabase-url]            | Database Solution            |
+| Supabase     | [![Supabase][Supabase]][Supabase-url]            | Database Solution            |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
