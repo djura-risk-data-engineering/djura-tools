@@ -29,7 +29,7 @@
     ·
     <a href="https://github.com/djura-risk-data-engineering/djura-tools/issues/new?labels=bug&template=bug-report---.md" target="_blank" rel="noopener noreferrer">Report Bug</a>
     ·
-    <a href="https://github.com/djura-risk-data-engineering/djura-tools/issues/new?labels=enhancement&template=feature-request---.md" target="_blank" rel="noopener noreferrer">Request Feature</a>
+    <a href="https://www.djura.it/get-in-touch" target="_blank" rel="noopener noreferrer">Request Feature</a>
     ·
     <a href="https://www.djura.it/blog" target="_blank" rel="noopener noreferrer">Blog</a>
     ·
@@ -119,7 +119,7 @@ This section guides you through the necessary steps to begin using our tools and
 
 **Website Access**
 
-- Visit our website at [https://www.djura.it](https://www.djura.it) to access our full suite of tools.
+- Visit our website at [https://apps.djura.it/](https://apps.djura.it/) to access our full suite of tools.
 - Guest Access allows you to explore and use our tools without creating an account.
 - Navigate to the tools dashboard to browse available options.
 
