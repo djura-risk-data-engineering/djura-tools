@@ -171,3 +171,5 @@ _exports/
 *oq-outputs*
 .archive
 msa-outputs
+poetry.lock
+docs/
