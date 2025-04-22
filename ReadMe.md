@@ -197,7 +197,7 @@ pytest --ff -n 4    # (rerun only failed tests in parallel)
 
 ## License
 
-This repository has a free License. See `LICENSE.txt` for more information.
+This repository has a free License. See `LICENSE` for more information.
 
 To learn about Djura licenses visit our [website](https://www.djura.it/online-platform) or contact us at info@djura.it
 
