@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List
 from scipy.interpolate import interp1d
 from pandas import read_csv
 import numpy as np
@@ -148,3 +149,282 @@ def proc_oq_hazard_curve(
             json.dump(output_data, file, indent=4)
 
     return output_data
+
+
+def proc_oq_disaggregation_exc(
+    path_disagg_results: str | Path,
+    out_file: str | Path = None,
+    disagg_file_start: str = 'Mag_Dist'
+) -> dict:
+    """
+    Process disaggregation results from OpenQuake and store them in a JSON
+    file.
+
+    This function reads disaggregation data from OpenQuake results, including
+    magnitudes (M) and distances (R) for different probabilities of exceedance
+    (poes) and intensity measure types (IMTs). It calculates key metrics such
+    as mean and modal magnitudes and distances, and stores the processed data
+    in a JSON file for easy access and further analysis.
+
+    Parameters
+    ----------
+    path_disagg_results : str | Path
+        The directory containing the disaggregation result files produced by
+        OpenQuake.
+    json_file : str | Path, optional
+        The output JSON file where the processed disaggregation data will be
+        stored.
+        Default is 'disaggregation.json'.
+    disagg_file_start : str, optional
+        Prefix of the disaggregation files to process. Files that begin with
+        this prefix and do not contain 'Mag_Dist_Eps' will be processed.
+        Default is 'Mag_Dist'.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    The function processes each disaggregation result file to extract the
+    following:
+
+    - `location`: Latitude and longitude of the site.
+    - `investigation_time`: The investigation time used in the disaggregation.
+    - `imt_disagg`: A dictionary where each intensity measure type (IMT)
+    contains:
+        - `poes`: List of probabilities of exceedance (poes) used in the
+        disaggregation.
+        - `return_periods`: Corresponding return periods for each poe.
+        - `mean_mags`: List of mean magnitudes for each poe.
+        - `mean_dists`: List of mean distances for each poe.
+        - `mod_mags`: List of modal magnitudes (magnitude with the highest
+        hazard contribution).
+        - `mod_dists`: List of modal distances (distance with the highest
+        hazard contribution).
+        - `mag_dist_hazard_contributions`: A dictionary of hazard
+        contributions for each poe,
+          containing magnitudes, distances, and their respective hazard
+          contributions.
+
+    Example
+    -------
+    To process disaggregation results stored in the directory 'results/disagg'
+    and save them in 'disagg_output.json', you can run:
+
+    >>> proc_oq_disaggregation('results/disagg', 'disagg_output.json')
+
+    This will generate a JSON file with all the processed disaggregation data.
+    """
+    from pandas import read_csv, DataFrame
+
+    # Convert paths to Path objects
+    path_disagg_results = Path(path_disagg_results)
+
+    # Initialize dictionary to store results
+    disagg_data = {
+        "location": {"lat": None, "lon": None},
+        "investigation_time": None,
+        "imt_disagg": {}
+    }
+
+    for file in path_disagg_results.iterdir():
+        if file.name.startswith(disagg_file_start) and \
+           'eps' not in file.name.lower():
+            # Load the dataframe
+            df = read_csv(file, skiprows=1)
+
+            # Extract hazard key (column starting with 'rlz' or 'mean')
+            hz_key = next(key for key in df.keys()
+                          if key.startswith('rlz') or key == 'mean')
+
+            # Extract unique values for poes and imt
+            poes = np.unique(df['poe']).tolist()
+            poes.sort(reverse=True)
+            ims = np.unique(df['imt'])
+
+            # Extract salient information from the first line of the file
+            with file.open("r") as f:
+                first_line = f.readline().split(',')
+                lon = float(next(filter(lambda x: 'lon=' in x, first_line)
+                                 ).replace(" lon=", ""))
+                lat = float(next(filter(lambda x: 'lat=' in x, first_line)
+                                 ).replace(" lat=", "").replace("\"\n", ""))
+                inv_t = float(next(filter(
+                    lambda x: 'investigation_time=' in x, first_line
+                )).replace(" investigation_time=", ""))
+
+                # Set lat, lon, and investigation time in the dictionary (once)
+                disagg_data["location"]["lat"] = lat
+                disagg_data["location"]["lon"] = lon
+                disagg_data["investigation_time"] = inv_t
+
+            # Loop through each intensity measure (imt)
+            for imt in ims:
+                disagg_data["imt_disagg"][imt] = {
+                    "poes": poes,
+                    "return_periods": [],
+                    "mean_mags": [],
+                    "mean_dists": [],
+                    "mod_mags": [],
+                    "mod_dists": [],
+                    "mag_dist_hazard_contributions": {},
+                }
+
+                # Loop through each probability of exceedance (poe)
+                for poe in poes:
+                    return_period = round(-inv_t / np.log(1 - poe))
+                    disagg_data["imt_disagg"][imt]["return_periods"].append(
+                        return_period)
+
+                    # Filter data for current poe and imt
+                    mag_data = df['mag'][(
+                        df['poe'] == poe) & (df['imt'] == imt)]
+                    dist_data = df['dist'][
+                        (df['poe'] == poe) & (df['imt'] == imt)]
+                    hz_cont_data = df[hz_key][
+                        (df['poe'] == poe) & (df['imt'] == imt)]
+                    # Normalize hazard contribution
+                    hz_cont_data_norm = hz_cont_data / hz_cont_data.sum()
+
+                    # Create a DataFrame to hold the magnitude, distance,
+                    # and hazard contribution
+                    data = DataFrame({
+                        "mag": mag_data,
+                        "dist": dist_data,
+                        "hz_cont": hz_cont_data_norm
+                    })
+
+                    # Compute modal (highest hazard contribution) values
+                    mode = data.sort_values(by='hz_cont', ascending=False
+                                            ).iloc[0]
+                    mode_mag = mode['mag']
+                    mode_dist = mode['dist']
+
+                    # Compute mean values
+                    mean_mag = np.sum(data['mag'] * data['hz_cont'])
+                    mean_dist = np.sum(data['dist'] * data['hz_cont'])
+
+                    disagg_data["imt_disagg"][imt]["mean_mags"].append(
+                        mean_mag)
+                    disagg_data["imt_disagg"][imt]["mean_dists"].append(
+                        mean_dist)
+                    disagg_data["imt_disagg"][imt]["mod_mags"].append(
+                        mode_mag)
+                    disagg_data["imt_disagg"][imt]["mod_dists"].append(
+                        mode_dist)
+
+                    # Store magnitude, distance, and hazard contribution in
+                    # the dictionary
+                    disagg_data["imt_disagg"][imt][
+                        "mag_dist_hazard_contributions"][f"poe_{poe}"] = {
+                        "mag": mag_data.tolist(),
+                        "dist": dist_data.tolist(),
+                        "hz_cont": hz_cont_data_norm.tolist(),
+                        "gamma": hz_cont_data.tolist()
+                    }
+
+    if out_file is None:
+        out_file = Path(out_file)
+
+        # Save the output dictionary as a JSON file
+        with open(out_file, 'w') as file:
+            json.dump(disagg_data, file, indent=4)
+
+    return disagg_data
+
+
+def proc_oq_disaggregation_occ(
+    poes: List[float],
+    path_disagg_results: str | Path,
+    out_file: str | Path = None,
+    disagg_file_start: str = 'Mag_Dist',
+    tol: float = 0.05
+) -> None:
+
+    disagg = proc_oq_disaggregation_exc(
+        path_disagg_results, None, disagg_file_start
+    )
+
+    imts = list(disagg["imt_disagg"].keys())
+
+    for imt in imts:
+        data = disagg["imt_disagg"][imt]
+        for target in poes:
+            closest = [v for v in data["poes"] if v < target]
+            if not closest:
+                raise ValueError(
+                    f"There is no smaller PoE than {target} "
+                    "in disaggregation."
+                )
+            else:
+                closest = max(closest)
+                if (target - closest) / target > tol:
+                    raise ValueError(
+                        f"Add a close PoE to {target} to disaggregation PoEs"
+                    )
+            gamma_i = np.array(
+                data["mag_dist_hazard_contributions"][f"poe_{target}"]["gamma"]
+            )
+            gamma_i_1 = np.array(
+                data["mag_dist_hazard_contributions"][f"poe_{closest}"][
+                    "gamma"
+                ]
+            )
+            prob_im_m_r = (gamma_i_1 - gamma_i) / (
+                np.sum(gamma_i_1) - np.sum(gamma_i)
+            )
+            # not required but let's make sure
+            prob_im_m_r /= np.sum(prob_im_m_r)
+            disagg["imt_disagg"][imt]["mag_dist_hazard_contributions"][
+                f"poe_{target}"
+            ]["prob_occur"] = list(prob_im_m_r)
+
+    if out_file is None:
+        out_file = Path(out_file)
+
+        # Save the output dictionary as a JSON file
+        with open(out_file, 'w') as file:
+            json.dump(disagg, file, indent=4)
+
+    return disagg
+
+
+def proc_oq_disaggregation(
+    path_disagg_results: str | Path,
+    poes: List[float] = None,
+    out_file: str | Path = None,
+    disagg_file_start: str = "Mag_Dist",
+    tol: float = 0.05,
+) -> dict:
+
+    if poes:
+        disagg = proc_oq_disaggregation_occ(
+            poes, path_disagg_results, out_file, disagg_file_start, tol
+        )
+    else:
+        disagg = proc_oq_disaggregation_exc(
+            path_disagg_results, out_file, disagg_file_start
+        )
+
+    imts = list(disagg["imt_disagg"].keys())
+    for imt in imts:
+        data = disagg["imt_disagg"][imt]["mag_dist_hazard_contributions"]
+        poe_keys = list(data.keys())
+        for poe in poe_keys:
+            keys_to_filter = ["mag", "dist", "hz_cont", "gamma"]
+            if "prob_occur" in data[poe]:
+                valid_indices = [i for i, hz in
+                                 enumerate(data[poe]["prob_occur"])
+                                 if hz != 0]
+                keys_to_filter.append("prob_occur")
+            else:
+                valid_indices = [i for i, hz in enumerate(data[poe]["hz_cont"])
+                                 if hz != 0]
+            # Filter all relevant keys using valid indices
+            for key in keys_to_filter:
+                data[poe][key] = [data[poe][key][i] for i in valid_indices]
+
+        disagg["imt_disagg"][imt]["mag_dist_hazard_contributions"] = data
+
+    return disagg

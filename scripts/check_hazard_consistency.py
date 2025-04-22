@@ -7,7 +7,7 @@ path = Path(__file__).resolve().parent
 sys.path.insert(0, str(path.parent))
 
 from djura.utilities import to_json_serializable
-from djura.record_selector.rs import prepare_input_for_hzc
+from djura.record_selector.hzc import prepare_input_for_hzc
 from djura.hazard.psha import proc_oq_hazard_curve
 
 
