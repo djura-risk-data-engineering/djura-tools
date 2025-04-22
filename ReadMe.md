@@ -13,8 +13,8 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://www.djura.it/favicon.svg">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+  <a href="https://www.djura.it">
+    <img src="images/djura-logo.png" alt="Logo" width="250" >
   </a>
 
   <h3 align="center">Djura-Tools</h3>
