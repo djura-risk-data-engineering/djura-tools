@@ -8,7 +8,7 @@ import json
 def proc_oq_hazard_curve(
     poes: list[float],
     path_hazard_results: str | Path,
-    json_file: str | Path = 'hazard.json',
+    out_file: str | Path = None,
     haz_file_start: str = 'hazard_curve-mean'
 ) -> None:
     """
@@ -71,7 +71,6 @@ def proc_oq_hazard_curve(
 
     # Convert paths to Path objects
     path_hazard_results = Path(path_hazard_results)
-    json_file = Path(json_file)
 
     # Initialise dictionary to store all outputs
     output_data = {
@@ -142,8 +141,10 @@ def proc_oq_hazard_curve(
         output_data["cond_imls"][output_data["im"][idx]] = iml_interp.tolist()
 
     # Save the output dictionary as a JSON file
-    if json_file:
-        with open(json_file, 'w') as file:
+    if out_file is not None:
+        out_file = Path(out_file)
+
+        with open(out_file, 'w') as file:
             json.dump(output_data, file, indent=4)
 
     return output_data

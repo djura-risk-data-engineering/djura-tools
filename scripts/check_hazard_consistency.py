@@ -17,7 +17,8 @@ from djura.hazard.psha import proc_oq_hazard_curve
 poes = [0.4, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.0025, 0.001]
 
 # Set the hazard-curves 
-hz = proc_oq_hazard_curve(poes, path / 'data/psha')
+hz = proc_oq_hazard_curve(poes, path / 'data/psha',
+                          out_file=path / 'data/psha/hazard.json')
 
 curves = hz['hazard_curves']
 
