@@ -13,7 +13,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://www.djura.it">
+  <a href="https://www.djura.it" target="_blank" rel="noopener noreferrer">
     <img src="images/djura-logo.png" alt="Logo" width="250" >
   </a>
 
@@ -22,18 +22,18 @@
   <p align="center">
     Helper functions and tools for Djura applications
     <br />
-    <a href="https://github.com/djura-risk-data-engineering/djura-tools"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/djura-risk-data-engineering/djura-tools" target="_blank" rel="noopener noreferrer"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://apps.djura.it/">Try the Apps</a>
+    <a href="https://apps.djura.it/" target="_blank" rel="noopener noreferrer">Try the Apps</a>
     ·
-    <a href="https://github.com/djura-risk-data-engineering/djura-tools/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
+    <a href="https://github.com/djura-risk-data-engineering/djura-tools/issues/new?labels=bug&template=bug-report---.md" target="_blank" rel="noopener noreferrer">Report Bug</a>
     ·
-    <a href="https://github.com/djura-risk-data-engineering/djura-tools/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+    <a href="https://github.com/djura-risk-data-engineering/djura-tools/issues/new?labels=enhancement&template=feature-request---.md" target="_blank" rel="noopener noreferrer">Request Feature</a>
     ·
-    <a href="https://www.djura.it/blog">Blog</a>
+    <a href="https://www.djura.it/blog" target="_blank" rel="noopener noreferrer">Blog</a>
     ·
-    <a href="https://www.youtube.com/@djura-risk-engineering-data/videos">Youtube</a>
+    <a href="https://www.youtube.com/@djura-risk-engineering-data/videos" target="_blank" rel="noopener noreferrer">Youtube</a>
   </p>
 </div>
 
