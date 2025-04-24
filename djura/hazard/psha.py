@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import List
 from scipy.interpolate import interp1d
-from pandas import read_csv
+from pandas import read_csv, DataFrame
 import numpy as np
 import json
 
@@ -61,13 +61,7 @@ def proc_oq_hazard_curve(
 
     Example
     -------
-    To process hazard curve files in a directory and save them in a JSON file,
-    run:
-
     >>> proc_oq_hazard_curve([0.1, 0.5], 'path/to/results', 'outputs.json')
-
-    This will process hazard curve files from the directory `path/to/results`
-    and save the results in `outputs.json`.
     """
 
     # Convert paths to Path objects
@@ -182,7 +176,8 @@ def proc_oq_disaggregation_exc(
 
     Returns
     -------
-    None
+    dict
+        A dictionary containing processed disaggregation data.
 
     Notes
     -----
@@ -209,20 +204,14 @@ def proc_oq_disaggregation_exc(
 
     Example
     -------
-    To process disaggregation results stored in the directory 'results/disagg'
-    and save them in 'disagg_output.json', you can run:
-
     >>> proc_oq_disaggregation('results/disagg', 'disagg_output.json')
-
-    This will generate a JSON file with all the processed disaggregation data.
     """
-    from pandas import read_csv, DataFrame
 
     # Convert paths to Path objects
     path_disagg_results = Path(path_disagg_results)
 
     # Initialize dictionary to store results
-    disagg_data = {
+    disagg = {
         "location": {"lat": None, "lon": None},
         "investigation_time": None,
         "imt_disagg": {}
@@ -255,13 +244,13 @@ def proc_oq_disaggregation_exc(
                 )).replace(" investigation_time=", ""))
 
                 # Set lat, lon, and investigation time in the dictionary (once)
-                disagg_data["location"]["lat"] = lat
-                disagg_data["location"]["lon"] = lon
-                disagg_data["investigation_time"] = inv_t
+                disagg["location"]["lat"] = lat
+                disagg["location"]["lon"] = lon
+                disagg["investigation_time"] = inv_t
 
             # Loop through each intensity measure (imt)
             for imt in ims:
-                disagg_data["imt_disagg"][imt] = {
+                disagg["imt_disagg"][imt] = {
                     "poes": poes,
                     "return_periods": [],
                     "mean_mags": [],
@@ -274,7 +263,7 @@ def proc_oq_disaggregation_exc(
                 # Loop through each probability of exceedance (poe)
                 for poe in poes:
                     return_period = round(-inv_t / np.log(1 - poe))
-                    disagg_data["imt_disagg"][imt]["return_periods"].append(
+                    disagg["imt_disagg"][imt]["return_periods"].append(
                         return_period)
 
                     # Filter data for current poe and imt
@@ -292,46 +281,46 @@ def proc_oq_disaggregation_exc(
                     data = DataFrame({
                         "mag": mag_data,
                         "dist": dist_data,
-                        "hz_cont": hz_cont_data_norm
+                        "hz_cont_exc": hz_cont_data_norm
                     })
 
                     # Compute modal (highest hazard contribution) values
-                    mode = data.sort_values(by='hz_cont', ascending=False
+                    mode = data.sort_values(by='hz_cont_exc', ascending=False
                                             ).iloc[0]
                     mode_mag = mode['mag']
                     mode_dist = mode['dist']
 
                     # Compute mean values
-                    mean_mag = np.sum(data['mag'] * data['hz_cont'])
-                    mean_dist = np.sum(data['dist'] * data['hz_cont'])
+                    mean_mag = np.sum(data['mag'] * data['hz_cont_exc'])
+                    mean_dist = np.sum(data['dist'] * data['hz_cont_exc'])
 
-                    disagg_data["imt_disagg"][imt]["mean_mags"].append(
+                    disagg["imt_disagg"][imt]["mean_mags"].append(
                         mean_mag)
-                    disagg_data["imt_disagg"][imt]["mean_dists"].append(
+                    disagg["imt_disagg"][imt]["mean_dists"].append(
                         mean_dist)
-                    disagg_data["imt_disagg"][imt]["mod_mags"].append(
+                    disagg["imt_disagg"][imt]["mod_mags"].append(
                         mode_mag)
-                    disagg_data["imt_disagg"][imt]["mod_dists"].append(
+                    disagg["imt_disagg"][imt]["mod_dists"].append(
                         mode_dist)
 
                     # Store magnitude, distance, and hazard contribution in
                     # the dictionary
-                    disagg_data["imt_disagg"][imt][
+                    disagg["imt_disagg"][imt][
                         "mag_dist_hazard_contributions"][f"poe_{poe}"] = {
                         "mag": mag_data.tolist(),
                         "dist": dist_data.tolist(),
-                        "hz_cont": hz_cont_data_norm.tolist(),
+                        "hz_cont_exc": hz_cont_data_norm.tolist(),
                         "gamma": hz_cont_data.tolist()
                     }
 
-    if out_file is None:
+    if out_file is not None:
         out_file = Path(out_file)
 
         # Save the output dictionary as a JSON file
         with open(out_file, 'w') as file:
-            json.dump(disagg_data, file, indent=4)
+            json.dump(disagg, file, indent=4)
 
-    return disagg_data
+    return disagg
 
 
 def proc_oq_disaggregation_occ(
@@ -340,7 +329,82 @@ def proc_oq_disaggregation_occ(
     out_file: str | Path = None,
     disagg_file_start: str = 'Mag_Dist',
     tol: float = 0.05
-) -> None:
+) -> dict:
+    """
+    Process exceedance disaggregation results from OpenQuake, and computes
+    occurrence disaggregation results store all of them in a JSON file.
+
+    This function reads disaggregation data from OpenQuake results, including
+    magnitudes (M) and distances (R) for different probabilities of exceedance
+    (poes) and intensity measure types (IMTs). It calculates key metrics such
+    as mean and modal magnitudes and distances, and stores the processed data
+    in a JSON file for easy access and further analysis.
+
+    The function internally calls the `proc_oq_disaggregation_exc` method to
+    compute exceedance disaggregation. Additionally, it estimates occurrence
+    disaggregation using the approximation proposed by Fox et al. (2016).
+    Therefore, for each desired poe, the user must also compute disaggregation
+    using the OpenQuake engine at 0.99poe.
+
+    Parameters
+    ----------
+    poes : List[float]
+        The list of poes at which occurrence disaggregation is computed.
+    path_disagg_results : str | Path
+        The directory containing the disaggregation result files produced by
+        OpenQuake.
+    json_file : str | Path, optional
+        The output JSON file where the processed disaggregation data will be
+        stored.
+        Default is 'disaggregation.json'.
+    disagg_file_start : str, optional
+        Prefix of the disaggregation files to process. Files that begin with
+        this prefix and do not contain 'Mag_Dist_Eps' will be processed.
+        Default is 'Mag_Dist'.
+
+    References
+    ----------
+    Fox MJ, Stafford PJ, Sullivan TJ. Seismic hazard disaggregation in
+    performance-based earthquake engineering: occurrence or exceedance?
+    Earthq Eng Struct Dyn 2016;45:835-42. https://doi.org/10.1002/eqe.2675.
+
+    Returns
+    -------
+    dict
+        A dictionary containing processed disaggregation data.
+
+    Notes
+    -----
+    The function processes each disaggregation result file to extract the
+    following:
+
+    - `location`: Latitude and longitude of the site.
+    - `investigation_time`: The investigation time used in the disaggregation.
+    - `imt_disagg`: A dictionary where each intensity measure type (IMT)
+    contains:
+        - `poes`: List of probabilities of exceedance (poes) used in the
+        disaggregation.
+        - `return_periods`: Corresponding return periods for each poe.
+        - `mean_mags`: List of mean magnitudes for each poe.
+        - `mean_dists`: List of mean distances for each poe.
+        - `mod_mags`: List of modal magnitudes (magnitude with the highest
+        hazard contribution).
+        - `mod_dists`: List of modal distances (distance with the highest
+        hazard contribution).
+        - `mag_dist_hazard_contributions`: A dictionary of hazard
+        contributions for each poe, containing magnitudes, distances, and
+        their respective hazard contributions in terms of exceedances
+        and occurrences.
+
+    Example
+    -------
+    To process disaggregation results stored in the directory 'results/disagg'
+    and save them in 'disagg_output.json', you can run:
+
+    >>> proc_oq_disaggregation_occ(
+        [0.1, 0.01], 'results/disagg', 'disagg_output.json'
+        )
+    """
 
     disagg = proc_oq_disaggregation_exc(
         path_disagg_results, None, disagg_file_start
@@ -378,9 +442,9 @@ def proc_oq_disaggregation_occ(
             prob_im_m_r /= np.sum(prob_im_m_r)
             disagg["imt_disagg"][imt]["mag_dist_hazard_contributions"][
                 f"poe_{target}"
-            ]["prob_occur"] = list(prob_im_m_r)
+            ]["hz_cont_occ"] = list(prob_im_m_r)
 
-    if out_file is None:
+    if out_file is not None:
         out_file = Path(out_file)
 
         # Save the output dictionary as a JSON file
@@ -397,6 +461,69 @@ def proc_oq_disaggregation(
     disagg_file_start: str = "Mag_Dist",
     tol: float = 0.05,
 ) -> dict:
+    """
+    Wrapper function to process disaggregation results from OpenQuake and store
+    them in a JSON file.
+
+    This function selects between exceedance and occurrence disaggregation
+    depending on whether a list of probabilities of exceedance (poes) is
+    provided. It calculates key statistics such as mean and modal magnitudes
+    and distances, and stores the results in a structured JSON file for
+    downstream use.
+
+    - If `poes` is provided, the function computes both exceedance and
+      occurrence disaggregation (based on Fox et al. 2016).
+    - If `poes` is not provided, it computes only exceedance disaggregation.
+
+    It also removes magnitude-distance bins with zero hazard contributions
+    to clean up the final data structure.
+
+    Parameters
+    ----------
+    path_disagg_results : str | Path
+        Path to the directory containing OpenQuake disaggregation output files.
+    poes : List[float], optional
+        List of probabilities of exceedance to compute occurrence
+        disaggregation. If None, only exceedance disaggregation is processed.
+    out_file : str | Path, optional
+        Path to the output JSON file where the processed results will be
+        stored. If None, the results are not saved to file.
+    disagg_file_start : str, optional
+        Prefix used to identify relevant disaggregation result files.
+        Files must start with this prefix and exclude 'Mag_Dist_Eps'.
+        Default is 'Mag_Dist'.
+    tol : float, optional
+        Tolerance used to match provided poes with existing disaggregation poes
+        when computing occurrence disaggregation. Default is 0.05.
+
+    Returns
+    -------
+    dict
+        A dictionary containing cleaned and processed disaggregation data,
+        including mean/modal magnitudes and distances, return periods, and
+        hazard contributions by magnitude-distance bins.
+
+    Notes
+    -----
+    The returned dictionary structure includes:
+    - `location`: Latitude and longitude of the site.
+    - `investigation_time`: The investigation time from the OpenQuake analysis.
+    - `imt_disagg`: Dictionary of results for each intensity measure type
+    (IMT), containing:
+        - `poes`, `return_periods`, `mean_mags`, `mean_dists`,
+          `mod_mags`, `mod_dists`
+        - `mag_dist_hazard_contributions`: Dictionary with disaggregated hazard
+          data per PoE, including:
+            - `mag`, `dist`: Bin edges
+            - `hz_cont_exc`: Hazard contributions (exceedance)
+            - `hz_cont_occ`: Hazard contributions (occurrence, if poes given)
+            - `gamma`: Rate of exceedances for given mag and dist pair
+
+    Example
+    -------
+    >>> proc_oq_disaggregation('results/disagg')
+    >>> proc_oq_disaggregation('results/disagg', [0.1, 0.01], 'output.json')
+    """
 
     if poes:
         disagg = proc_oq_disaggregation_occ(
@@ -412,15 +539,18 @@ def proc_oq_disaggregation(
         data = disagg["imt_disagg"][imt]["mag_dist_hazard_contributions"]
         poe_keys = list(data.keys())
         for poe in poe_keys:
-            keys_to_filter = ["mag", "dist", "hz_cont", "gamma"]
-            if "prob_occur" in data[poe]:
-                valid_indices = [i for i, hz in
-                                 enumerate(data[poe]["prob_occur"])
-                                 if hz != 0]
-                keys_to_filter.append("prob_occur")
+            keys_to_filter = ["mag", "dist", "hz_cont_exc", "gamma"]
+            if "hz_cont_occ" in data[poe]:
+                valid_indices = [
+                    i for i, hz in enumerate(data[poe]["hz_cont_occ"])
+                    if hz != 0
+                ]
+                keys_to_filter.append("hz_cont_occ")
             else:
-                valid_indices = [i for i, hz in enumerate(data[poe]["hz_cont"])
-                                 if hz != 0]
+                valid_indices = [
+                    i for i, hz in enumerate(data[poe]["hz_cont_exc"])
+                    if hz != 0
+                ]
             # Filter all relevant keys using valid indices
             for key in keys_to_filter:
                 data[poe][key] = [data[poe][key][i] for i in valid_indices]
