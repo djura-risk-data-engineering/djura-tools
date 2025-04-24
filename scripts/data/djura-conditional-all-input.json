@@ -1,0 +1,116 @@
+{
+
+  "num-components": 1,
+  "component-definition": "GeoMean",
+  "greedy-loops": 2,
+  "nreplicate": 20,
+  "num_records": 40,
+  "seed": 0,
+  "ks_alpha": 0.05,
+  "max_scaling_factor": 10.0,
+
+  "context_limits": {
+    "mechanism": [
+      null,
+      null
+    ],
+    "magnitude": [
+      null,
+      null
+    ],
+    "Rjb": [
+      null,
+      null
+    ],
+    "Rrup": [
+      null,
+      null
+    ],
+    "Z2pt5": [
+      null,
+      null
+    ],
+    "Z1": [
+      null,
+      null
+    ],
+    "Vs30": [
+      null,
+      null
+    ],
+    "D_hyp": [
+      null,
+      null
+    ],
+    "Ds595": [
+      null,
+      null
+    ],
+    "npts": [
+      null,
+      null
+    ],
+    "Tp": [
+      null,
+      null
+    ]
+  },
+  "site-parameters": {
+    "z2pt5": "1.382581718",
+    "z1pt0": "391.341886",
+    "vs30": "370"
+  },
+  "gmms": [
+    {
+      "ID": 0,
+      "SA": {
+        "names": [
+          "BooreEtAl2014"
+        ],
+        "weights": [
+          1
+        ]
+      }
+    }
+  ],
+  "imi": [
+    "SA(0.1)",
+    "SA(0.2)",
+    "SA(0.3)",
+    "SA(0.5)",
+    "SA(0.7)",
+    "SA(1)",
+    "SA(1.5)",
+    "SA(2)"
+  ],
+  "ruptures": [
+    {
+      "ID": 0,
+      "gmms": [
+        0
+      ],
+      "rx": 12.41,
+      "ztor": 4,
+      "rrup": 13.49,
+      "mag": 7.5,
+      "mechanism": "strike-slip fault",
+      "d_hyp": 16,
+      "rjb": 10.56,
+      "weight": 1
+    }
+  ],
+  "im_weights": [
+    0.125,
+    0.125,
+    0.125,
+    0.125,
+    0.125,
+    0.125,
+    0.125,
+    0.125
+  ],
+  "im-star": {
+    "type": "SA(1.0)",
+    "value": 0.5
+  }
+}
