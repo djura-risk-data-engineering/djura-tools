@@ -242,7 +242,7 @@ Project Link: [https://github.com/djura-risk-data-engineering/djura-tools](https
 [issues-shield]: https://img.shields.io/github/issues/djura-risk-data-engineering/djura-tools
 [issues-url]: https://github.com/djura-risk-data-engineering/djura-tools/issues
 [license-shield]: https://img.shields.io/github/license/djura-risk-data-engineering/djura-tools
-[license-url]: https://github.com/djura-risk-data-engineering/djura-tools/blob/master/LICENSE.txt
+[license-url]: https://github.com/djura-risk-data-engineering/djura-tools/blob/master/LICENSE
 [linkedin-shield]: https://img.shields.io/badge/LinkedIn-Connect-blue
 [linkedin-url]: https://www.linkedin.com/company/djura
 [youtube-shield]: https://img.shields.io/badge/YouTube-red?style=flat&logo=youtube
