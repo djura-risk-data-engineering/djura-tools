@@ -1,20 +1,18 @@
 <a id="readme-top"></a>
 
-<!-- PROJECT SHIELDS -->
-<!-- [![Contributors][contributors-shield]][contributors-url] -->
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
-
 
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
+  <table>
+    <tbody>
+      <tr>
+        <td>Drop a star to support Djura ⭐</td>
+      </tr>
+    </tbody>
+  </table>
   <a href="https://www.djura.it" target="_blank" rel="noopener noreferrer">
-    <img src="images/djura-logo.png" alt="Logo" width="250" >
+    <img src="images/djura-logo.png" alt="Logo" >
   </a>
 
   <h3 align="center">Djura-Tools</h3>
@@ -35,7 +33,28 @@
     ·
     <a href="https://www.youtube.com/@djura-risk-engineering-data/videos" target="_blank" rel="noopener noreferrer">Youtube</a>
   </p>
+
 </div>
+
+<br/>
+
+<div align="center">
+
+  <!-- PROJECT SHIELDS -->
+  <!-- [![Contributors][contributors-shield]][contributors-url] -->
+  [![LinkedIn][linkedin-shield]][linkedin-url]
+  [![Youtube][youtube-shield]][youtube-url]
+  [![Email][email-shield]][email-url]
+
+  [![PyPI - Python Version](https://img.shields.io/badge/python-%3E%3D%203.11-blue)](https://github.com/djura-risk-data-engineering/djura-tools)
+  [![Forks][forks-shield]][forks-url]
+  [![Stargazers][stars-shield]][stars-url]
+  [![Issues][issues-shield]][issues-url]
+  [![MIT License][license-shield]][license-url]
+
+</div>
+
+<br/>
 
 <details>
   <summary>Table of Contents</summary>
@@ -214,18 +233,22 @@ Project Link: [https://github.com/djura-risk-data-engineering/djura-tools](https
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
-[contributors-shield]: https://img.shields.io/github/contributors/djura-risk-data-engineering/djura-tools.svg?style=for-the-badge
+[contributors-shield]: https://img.shields.io/github/contributors/djura-risk-data-engineering/djura-tools
 [contributors-url]: https://github.com/djura-risk-data-engineering/djura-tools/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/djura-risk-data-engineering/djura-tools.svg?style=for-the-badge
+[forks-shield]: https://img.shields.io/github/forks/djura-risk-data-engineering/djura-tools
 [forks-url]: https://github.com/djura-risk-data-engineering/djura-tools/network/members
-[stars-shield]: https://img.shields.io/github/stars/djura-risk-data-engineering/djura-tools.svg?style=for-the-badge
+[stars-shield]: https://img.shields.io/github/stars/djura-risk-data-engineering/djura-tools
 [stars-url]: https://github.com/djura-risk-data-engineering/djura-tools/stargazers
-[issues-shield]: https://img.shields.io/github/issues/djura-risk-data-engineering/djura-tools.svg?style=for-the-badge
+[issues-shield]: https://img.shields.io/github/issues/djura-risk-data-engineering/djura-tools
 [issues-url]: https://github.com/djura-risk-data-engineering/djura-tools/issues
-[license-shield]: https://img.shields.io/github/license/djura-risk-data-engineering/djura-tools.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/djura-risk-data-engineering/djura-tools
 [license-url]: https://github.com/djura-risk-data-engineering/djura-tools/blob/master/LICENSE.txt
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
+[linkedin-shield]: https://img.shields.io/badge/LinkedIn-Connect-blue
 [linkedin-url]: https://www.linkedin.com/company/djura
+[youtube-shield]: https://img.shields.io/badge/YouTube-red?style=flat&logo=youtube
+[youtube-url]: https://www.youtube.com/@djura-risk-engineering-data/videos
+[email-shield]: https://img.shields.io/badge/Email-D14836?style=flat&logo=gmail&logoColor=white
+[email-url]: mailto:info@djura.it
 
 <!-- [product-screenshot]: temp.png -->
 [Nuxt.js]: https://img.shields.io/badge/Nuxt-002E3B?style=for-the-badge&logo=nuxtdotjs&logoColor=#00DC82
