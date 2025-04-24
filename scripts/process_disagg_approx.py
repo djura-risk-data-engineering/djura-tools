@@ -23,7 +23,7 @@ poes = [0.4, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.0025, 0.001]
 
 # Process the disaggregation excel file from OQ-Engine
 disagg_all = proc_oq_disaggregation(
-    path / 'data/oq', poes,
+    path / 'data/psha', poes,
     out_file=path / 'data/psha/disaggregation.json'
 )
 
@@ -64,8 +64,8 @@ for idx, poe in enumerate(poes):
                 "rjb": disagg['dist'][i],
                 "mag": disagg['mag'][i],
                 "rake": 0.0,
-                "weight": disagg['prob_occur'][i],
-                # "weight": disagg['hz_cont'][i],
+                "weight": disagg['hz_cont_occ'][i],
+                # "weight": disagg['hz_cont_exc'][i],
             }
         )
     rs_input["ruptures"] = ruptures
