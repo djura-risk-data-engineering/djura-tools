@@ -41,6 +41,7 @@ rs_input["imi"] = [
     'SA(0.7)', 'SA(0.8)', 'SA(0.9)', 'SA(1.0)', 'SA(1.25)',
     'SA(1.5)', 'SA(2.0)', 'SA(2.5)', 'SA(3.0)'
 ]
+rs_input["im_weights"] = [1 / len(rs_input["imi"])] * len(rs_input["imi"])
 rs_input["gmms"] = [
     {"ID": 0, "SA": {"names": ['KothaEtAl2020ESHM20'], "weights": [1]}}
 ]
@@ -68,10 +69,10 @@ for idx, poe in enumerate(poes):
                 # "weight": disagg['hz_cont_exc'][i],
             }
         )
-    rs_input["ruptures"] = ruptures
-    rs_input["im-star"] = {"type": imt, "value": imls[idx]}
-    rs_input["im_weights"] = [1 / len(rs_input["imi"])] * len(rs_input["imi"])
-
+    rs_input[poe] = {
+        "ruptures": ruptures,
+        "im-star": {"type": imt, "value": imls[idx]},
+    }
     # You may save the rs_input variable to a file for each POE
     # This input then may be directly uploaded in 
     # https://apps.djura.it/hazard/record-selector/conditional
