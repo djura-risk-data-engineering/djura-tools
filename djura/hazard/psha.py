@@ -485,6 +485,7 @@ def proc_oq_disaggregation(
     poes : List[float], optional
         List of probabilities of exceedance to compute occurrence
         disaggregation. If None, only exceedance disaggregation is processed.
+        Must be None if hazard disaggregation was done using exceedance POEs
     out_file : str | Path, optional
         Path to the output JSON file where the processed results will be
         stored. If None, the results are not saved to file.
