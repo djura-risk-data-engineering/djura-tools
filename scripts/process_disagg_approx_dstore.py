@@ -8,13 +8,15 @@ This is an approximate approach
 from pathlib import Path
 import sys
 import json
+import heapq
+import numpy as np
 
 path = Path(__file__).resolve().parent
 
 sys.path.insert(0, str(path.parent))
 
+from djura.hazard.dstore import get_context_from_dstore
 from djura.hazard.psha import proc_oq_disaggregation, proc_oq_hazard_curve
-
 
 # POEs of interest
 # Those are probability of exceedances (POEs) associated with intensity levels
@@ -35,6 +37,8 @@ imt = "SA(0.5)"
 imls = hz['cond_imls'][imt]
 
 rs_input = json.load(open(path / "data/djura-conditional-all-input.json"))
+
+# Some of the following input parameters are taken from the job.ini file
 rs_input["imi"] = [
     'SA(0.05)', 'SA(0.075)', 'SA(0.1)', 'SA(0.15)', 'SA(0.2)',
     'SA(0.25)', 'SA(0.3)', 'SA(0.4)', 'SA(0.5)', 'SA(0.6)',
@@ -45,6 +49,7 @@ rs_input["im_weights"] = [1 / len(rs_input["imi"])] * len(rs_input["imi"])
 rs_input["gmms"] = [
     {"ID": 0, "SA": {"names": ['KothaEtAl2020ESHM20'], "weights": [1]}}
 ]
+# can be read directly from the datastore too
 rs_input["site-parameters"] = {
     "z2pt5": "1.38",
     "z1pt0": "391.34",
@@ -75,10 +80,72 @@ for idx, poe in enumerate(poes):
         "im-star": {"type": imt, "value": imls[idx]},
     }
     # You may save the rs_input variable to a file for each POE
-    # This input then may be directly uploaded in 
+    # This input then may be directly uploaded in
     # https://apps.djura.it/hazard/record-selector/conditional
 
     # NOTE: however, be careful as browsers might not easily display
     # large amount of data
     # If you encounter issues, feel free to contact us for questions
     # or to help run the API without a UI
+
+# Most contributing scenarios to select
+# Leave None for all
+n = 10
+if n is not None:
+    for poe in poes:
+        ruptures = rs_input['poes'][poe]['ruptures']
+
+        # select the most contributing scenarios (unsorted)
+        ruptures = heapq.nlargest(n, ruptures, key=lambda x: x['weight'])
+        rs_input['poes'][poe]['ruptures'] = ruptures
+
+# Match the mag and rjb to required parameters
+# Get datastore
+dstore = "2"
+hdf_path = path.parents[3] / f"oqdata/calc_{dstore}.hdf5"
+ctx, oq = get_context_from_dstore(hdf_path, im_ref=imt)
+
+site_params = {}
+
+# Based on OQ assignment
+first_key = next(iter(ctx['ctx_by_grp']))
+params = ctx['ctx_by_grp'][first_key]
+for param in ctx['site-parameters']:
+    site_params[param] = params[param][0]
+rs_input['site-parameters'] = site_params
+
+for poe in poes:
+    ruptures = rs_input["poes"][poe]['ruptures']
+    for i, rup in enumerate(ruptures):
+        mag = rup['mag']
+        rjb = rup['rjb']
+        print(f"Target Magnitude: {mag}, and Rjb: {rjb}")
+
+        # Euclidean distance for each recarray row
+        mag_normalized = (params['mag'] - params['mag'].min()) / \
+            (params['mag'].max() - params['mag'].min())
+        rjb_normalized = (params['rjb'] - params['rjb'].min()) / \
+            (params['rjb'].max() - params['rjb'].min())
+
+        target_mag_norm = (mag - params['mag'].min()) / \
+            (params['mag'].max() - params['mag'].min())
+        target_rjb_norm = (rjb - params['rjb'].min()) / \
+            (params['rjb'].max() - params['rjb'].min())
+
+        distances = np.sqrt((mag_normalized - target_mag_norm) **
+                            2 + (rjb_normalized - target_rjb_norm)**2)
+
+        closest_idx = np.argmin(distances)
+        closest_row = params[closest_idx]
+
+        print(f"Closest mag: {closest_row['mag']}")
+        print(f"Closest rjb: {closest_row['rjb']}")
+
+        # Required parameters
+        req_params = ctx['required-parameters']
+        req_params_values = {}
+        for param in req_params:
+            req_params_values[param] = closest_row[param]
+
+        rs_input["poes"][poe]['ruptures'][i] = {
+            **rs_input["poes"][poe]['ruptures'][i], **req_params_values}
