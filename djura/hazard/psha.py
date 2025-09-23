@@ -238,7 +238,8 @@ def proc_oq_disaggregation_exc(
                 lon = float(next(filter(lambda x: 'lon=' in x, first_line)
                                  ).replace(" lon=", ""))
                 lat = float(next(filter(lambda x: 'lat=' in x, first_line)
-                                 ).replace(" lat=", "").replace("\"\n", ""))
+                                 ).replace(" lat=", "").replace("\"\n", "")
+                            .replace("\"", ""))
                 inv_t = float(next(filter(
                     lambda x: 'investigation_time=' in x, first_line
                 )).replace(" investigation_time=", ""))
