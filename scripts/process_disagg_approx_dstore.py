@@ -149,3 +149,26 @@ for poe in poes:
 
         rs_input["poes"][poe]['ruptures'][i] = {
             **rs_input["poes"][poe]['ruptures'][i], **req_params_values}
+
+
+def to_json_serializable(data):
+    from numpy import float32, int32, ndarray
+
+    if isinstance(data, dict):
+        for key, value in data.items():
+            data[key] = to_json_serializable(value)
+    elif isinstance(data, list):
+        return [to_json_serializable(item) for item in data]
+    elif isinstance(data, ndarray):
+        return data.tolist()
+    elif isinstance(data, float32):
+        return float(data)
+    elif isinstance(data, int32):
+        return float(data)
+
+    return data
+
+
+rs_input = to_json_serializable(rs_input)
+with open("filename.json", "w") as json_file:
+    json.dump(rs_input['num-components'], json_file)
