@@ -108,8 +108,8 @@ ctx, oq = get_context_from_dstore(hdf_path, im_ref=imt)
 site_params = {}
 
 # Based on OQ assignment
-first_key = next(iter(ctx['ctx_by_grp']))
-params = ctx['ctx_by_grp'][first_key]
+params = np.rec.array(np.concatenate(list(ctx['ctx_by_grp'].values())))
+
 for param in ctx['site-parameters']:
     site_params[param] = params[param][0]
 rs_input['site-parameters'] = site_params
