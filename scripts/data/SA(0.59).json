@@ -1,12 +1,22 @@
 {
-  "num-components": 1,
-  "component-definition": "GeoMean",
-  "greedy-loops": 2,
-  "nreplicate": 20,
+  "num-components": 2,
+  "component-definition": "RotD50",
+  "greedy-loops": 1,
+  "nreplicate": 1,
   "num_records": 40,
   "seed": 0,
   "ks_alpha": 0.05,
   "max_scaling_factor": 10.0,
+  "advanced": {
+    "num-components": 2,
+    "component-definition": "RotD50",
+    "greedy-loops": 1,
+    "nreplicate": 1,
+    "num_records": 40,
+    "seed": 0,
+    "ks_alpha": 0.05,
+    "max_scaling_factor": 10.0
+  },
   "context_limits": {
     "mechanism": [null, null],
     "magnitude": [null, null],
