@@ -137,6 +137,11 @@ def get_context_from_dstore(dstore_path: Union[str, Path], im_ref: str = None,
             return s
         return s.replace('AvgSA', 'Sa_avg')
 
+    def _convert_rsds_to_ds(s: str):
+        if s is None:
+            return s
+        return s.replace('RSD', 'Ds')
+
     def _replace_dict_keys(data, old='AvgSA', new='Sa_avg'):
         new_dict = {}
         for key, value in data.items():
@@ -145,8 +150,6 @@ def get_context_from_dstore(dstore_path: Union[str, Path], im_ref: str = None,
         return new_dict
 
     dstore = DataStore(str(dstore_path))
-    # TODO, currently dstore includes only 1 logicTreeBranchingLevel
-    # every other logic tree branching level is not included in dsore, why?
 
     # Context by each group (source model)
     ctx_by_grp = read_ctx_by_grp(dstore)
@@ -155,7 +158,10 @@ def get_context_from_dstore(dstore_path: Union[str, Path], im_ref: str = None,
     cmakers = read_cmakers(dstore)
     toms = decode(dstore['toms'][:])
 
+    # for avgsa
     imtls = _replace_dict_keys(imtls)
+    # for rsds
+    imtls = _replace_dict_keys(imtls, 'RSD', 'Ds')
 
     try:
         im_ref = oq.im_ref
@@ -163,6 +169,7 @@ def get_context_from_dstore(dstore_path: Union[str, Path], im_ref: str = None,
         im_ref = im_ref
 
     im_ref = _convert_avgsa_to_sa_avg(im_ref)
+    im_ref = _convert_rsds_to_ds(im_ref)
 
     if im_ref is not None:
         if im_ref not in imtls.keys():

@@ -37,7 +37,7 @@ imls = hz['cond_imls'][imt]
 rs_input = json.load(open(path / "data/djura-conditional-all-input.json"))
 rs_input["imi"] = [
     'SA(0.05)', 'SA(0.075)', 'SA(0.1)', 'SA(0.15)', 'SA(0.2)',
-    'SA(0.25)', 'SA(0.3)', 'SA(0.4)', 'SA(0.5)', 'SA(0.6)',
+    'SA(0.25)', 'SA(0.3)', 'SA(0.4)', 'SA(0.5)', 'SA(0.59)', 'SA(0.6)',
     'SA(0.7)', 'SA(0.8)', 'SA(0.9)', 'SA(1.0)', 'SA(1.25)',
     'SA(1.5)', 'SA(2.0)', 'SA(2.5)', 'SA(3.0)'
 ]
