@@ -83,7 +83,8 @@ def proc_oq_hazard_curve(
         if file.name.startswith(haz_file_start):
 
             # Strip the IM out of the file name
-            im_type = (file.stem.split('-')[2]).split('_')[0]
+            items = (file.stem.split('-')[2]).split('_')
+            im_type = "_".join(items[:-1])
 
             # Load the results in as a dataframe
             df = read_csv(file, skiprows=1)
