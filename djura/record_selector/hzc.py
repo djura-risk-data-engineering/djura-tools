@@ -3,53 +3,57 @@ from typing import List
 import json
 import numpy as np
 
-from ..utilities import get_period_im
 
-
-def prepare_input_for_hzc(
+def prepare_rs_for_hzc(
     selection_dir: Path,
-    psha: dict,
     poes: List[float],
-    cond_imt: str,
+    imts: List[str],
 ):
-    poes = np.sort(poes)[::-1]
-    data = {
-        "rs_imi_intensities": [],
-    }
-    im_stars = []
+    """Prepare input Record selection intensity values for
+    hazard consistency checks
+
+    Parameters
+    ----------
+    selection_dir : Path
+        Directory of selected record json outputs following record selector of
+        Djura
+    poes : List[float]
+        List of POEs of interest
+    imts : List[str]
+        List of intensity measure types of interest
+
+    Returns
+    -------
+    Dict[numpy.ndarray]
+        IM values of selected records
+    """
+    rs = {}
+    for imi in imts:
+        rs[imi] = get_rs_imi_intensities(
+            selection_dir, poes, imi
+        )
+    return rs
+
+
+def get_rs_imi_intensities(
+    selection_dir: Path,
+    poes: List[float],
+    imi: str
+):
+    imls = []
     for poe in poes:
         with open(selection_dir / f"records_{poe}.json") as f:
             records = json.load(f)
+
         records = records['selected_scaled_best']
-        im_idxs = np.asarray(records['im_idxs']['SA'])
-        scaled_ims = np.asarray(records['Scaled_IMs'])[:, im_idxs]
+        if '(' in imi:
+            im_type = imi.split('(')[0]
+            period = float(imi.split('(')[1].split(')')[0])
+            period_idx = records['IMi'][im_type].index(period)
+            imi_idx = records['im_idxs'][im_type][period_idx]
+        else:
+            imi_idx = records['im_idxs'][imi]
+        imls.append(np.asarray(records['Scaled_IMs'])[:, imi_idx].flatten())
 
-        idx = records['IMi']['SA'].index(
-            float(cond_imt.split('(')[1].split(')')[0]))
-        im_stars.append(np.asarray(records['Scaled_IMs'])[0, idx])
-
-        if 'rs_imi_periods' not in data:
-            data['rs_imi_periods'] = records['IMi']['SA']
-
-        data['rs_imi_intensities'].append(scaled_ims.tolist())
-        # data['rs_imi_intensities'].append(records['Scaled_IMs'])
-
-    data['psha_imstar_intensities'] = psha['cond_imls'][cond_imt]
-    im_stars.sort()
-    data['psha_imstar_poes'] = psha['cond_poes']
-    data['investigation_time'] = psha['investigation_time']
-
-    data['psha_imi_intensities'] = {}
-    data['psha_imi_poes'] = {}
-
-    curves = psha['hazard_curves']
-    for key in curves.keys():
-        _, period = get_period_im(key)
-        data['psha_imi_intensities'][str(period)] = curves[
-            key
-        ]['iml']
-        data['psha_imi_poes'][str(period)] = curves[
-            key
-        ]['poe']
-
-    return data
+    imls = np.asarray(imls)
+    return imls

@@ -61,7 +61,13 @@ def proc_oq_hazard_curve(
 
     Example
     -------
+    To process hazard curve files in a directory and save them in a JSON file,
+    run:
+
     >>> proc_oq_hazard_curve([0.1, 0.5], 'path/to/results', 'outputs.json')
+
+    This will process hazard curve files from the directory `path/to/results`
+    and save the results in `outputs.json`.
     """
 
     # Convert paths to Path objects
@@ -83,7 +89,8 @@ def proc_oq_hazard_curve(
         if file.name.startswith(haz_file_start):
 
             # Strip the IM out of the file name
-            im_type = (file.stem.split('-')[2]).split('_')[0]
+            items = (file.stem.split('-')[2]).split('_')
+            im_type = "_".join(items[:-1])  # Join later for Sa_Avg
 
             # Load the results in as a dataframe
             df = read_csv(file, skiprows=1)
