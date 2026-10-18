@@ -64,11 +64,12 @@ for idx, poe in enumerate(poes):
         'mag_dist_hazard_contributions'][f'poe_{poe}']
     ruptures = []
     for i in range(len(disagg['mag'])):
+        # OpenQuake disaggregates on rrup
         ruptures.append(
             {
                 "ID": i,
                 "gmms": [0],
-                "rjb": disagg['dist'][i],
+                "rrup": disagg['dist'][i],
                 "mag": disagg['mag'][i],
                 "rake": 0.0,
                 "weight": disagg['hz_cont_occ'][i],
@@ -99,7 +100,7 @@ if n is not None:
         ruptures = heapq.nlargest(n, ruptures, key=lambda x: x['weight'])
         rs_input['poes'][poe]['ruptures'] = ruptures
 
-# Match the mag and rjb to required parameters
+# Match the mag and rrup to required parameters
 # Get datastore
 dstore = "2"
 hdf_path = path.parents[3] / f"oqdata/calc_{dstore}.hdf5"
@@ -118,28 +119,28 @@ for poe in poes:
     ruptures = rs_input["poes"][poe]['ruptures']
     for i, rup in enumerate(ruptures):
         mag = rup['mag']
-        rjb = rup['rjb']
-        print(f"Target Magnitude: {mag}, and Rjb: {rjb}")
+        rrup = rup['rrup']
+        print(f"Target Magnitude: {mag}, and Rrup: {rrup}")
 
         # Euclidean distance for each recarray row
         mag_normalized = (params['mag'] - params['mag'].min()) / \
             (params['mag'].max() - params['mag'].min())
-        rjb_normalized = (params['rjb'] - params['rjb'].min()) / \
-            (params['rjb'].max() - params['rjb'].min())
+        rrup_normalized = (params['rrup'] - params['rrup'].min()) / \
+            (params['rrup'].max() - params['rrup'].min())
 
         target_mag_norm = (mag - params['mag'].min()) / \
             (params['mag'].max() - params['mag'].min())
-        target_rjb_norm = (rjb - params['rjb'].min()) / \
-            (params['rjb'].max() - params['rjb'].min())
+        target_rrup_norm = (rrup - params['rrup'].min()) / \
+            (params['rrup'].max() - params['rrup'].min())
 
         distances = np.sqrt((mag_normalized - target_mag_norm) **
-                            2 + (rjb_normalized - target_rjb_norm)**2)
+                            2 + (rrup_normalized - target_rrup_norm)**2)
 
         closest_idx = np.argmin(distances)
         closest_row = params[closest_idx]
 
         print(f"Closest mag: {closest_row['mag']}")
-        print(f"Closest rjb: {closest_row['rjb']}")
+        print(f"Closest rrup: {closest_row['rrup']}")
 
         # Required parameters
         req_params = ctx['required-parameters']
