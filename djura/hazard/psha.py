@@ -283,6 +283,9 @@ def proc_oq_disaggregation_exc(
                         (df['poe'] == poe) & (df['imt'] == imt)]
                     # Normalize hazard contribution
                     hz_cont_data_norm = hz_cont_data / hz_cont_data.sum()
+                    # OQ exports PoEs in investigation_time; convert to
+                    # annual rates of exceedance for each mag-dist bin
+                    gamma = -np.log1p(-hz_cont_data) / inv_t
 
                     # Create a DataFrame to hold the magnitude, distance,
                     # and hazard contribution
@@ -318,7 +321,7 @@ def proc_oq_disaggregation_exc(
                         "mag": mag_data.tolist(),
                         "dist": dist_data.tolist(),
                         "hz_cont_exc": hz_cont_data_norm.tolist(),
-                        "gamma": hz_cont_data.tolist()
+                        "gamma": gamma.tolist()
                     }
 
     if out_file is not None:
@@ -526,7 +529,7 @@ def proc_oq_disaggregation(
             - `mag`, `dist`: Bin edges
             - `hz_cont_exc`: Hazard contributions (exceedance)
             - `hz_cont_occ`: Hazard contributions (occurrence, if poes given)
-            - `gamma`: Rate of exceedances for given mag and dist pair
+            - `gamma`: Annual rate of exceedance for given mag and dist pair
 
     Example
     -------
