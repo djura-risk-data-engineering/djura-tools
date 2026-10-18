@@ -1,5 +1,7 @@
+import ast
+import re
 from pathlib import Path
-from typing import List
+from typing import List, Union
 from scipy.interpolate import interp1d
 from pandas import read_csv, DataFrame
 import numpy as np
@@ -570,3 +572,99 @@ def proc_oq_disaggregation(
         disagg["imt_disagg"][imt]["mag_dist_hazard_contributions"] = data
 
     return disagg
+
+
+def proc_oq_disaggregation_trt(
+    path: Union[str, Path], imt: str, value_col: str = "mean",
+    poe: float = None, occurrence: bool = False, tol: float = 0.05
+) -> tuple:
+    """Read an OpenQuake TRT_Mag_Dist csv for one IMT and PoE
+
+    Parameters
+    ----------
+    path : Union[str, Path]
+        TRT_Mag_Dist csv, e.g. TRT_Mag_Dist-mean-0_1.csv
+    imt : str
+        IMT of the conditioning IM, e.g. 'SA(0.5)'
+    value_col : str, optional
+        Column with the probabilities of exceedance, by default 'mean'
+    poe : float, optional
+        PoE of IM*, required if the file has several, by default None
+    occurrence : bool, optional
+        Occurrence instead of exceedance contributions (Fox et al. 2016),
+        by default False. Needs the disaggregation at a PoE just below
+        `poe`, e.g. 0.99 * poe
+    tol : float, optional
+        Largest relative distance of that PoE from `poe`, by default 0.05
+
+    Returns
+    -------
+    DataFrame
+        Non-zero bins: trt, mag, dist, rate. ``rate`` is the bin's rate of
+        exceeding IM* times the investigation time, -ln(1 - poe), or with
+        `occurrence` its drop between the two PoEs
+    dict
+        Header metadata, including 'iml' (IM*), 'poe', 'mag_bin_edges'
+        and 'dist_bin_edges'
+
+    Notes
+    -----
+    Assumptions:
+
+    - Poissonian occurrence, so a bin's rate is -ln(1 - poe); rates of
+      bins add up while their PoEs do not.
+    - IM* is the IML of the mean hazard curve at `poe`, the level
+      OpenQuake disaggregates every realization at.
+    - Occurrence approximates the rate of IM falling between the IMLs of
+      the two PoEs by the drop of each bin's exceedance rate between them
+      (Fox et al. 2016), so the two PoEs must be close.
+
+    References
+    ----------
+    Fox MJ, Stafford PJ, Sullivan TJ (2016) Seismic hazard disaggregation
+    in performance-based earthquake engineering: occurrence or exceedance?
+    Earthquake Engineering & Structural Dynamics 45: 835-842.
+    """
+    with open(path) as f:
+        header = f.readline()
+    meta = {}
+    for key in ("investigation_time", "mag_bin_edges", "dist_bin_edges",
+                "lon", "lat"):
+        m = re.search(rf"{key}=(\[[^\]]*\]|[-0-9.eE+]+)", header)
+        if m:
+            meta[key] = ast.literal_eval(m.group(1))
+
+    df = read_csv(path, skiprows=1)
+    df = df[df["imt"] == imt]
+    if df.empty:
+        raise ValueError(f"{imt} not found in {path}")
+
+    poes = sorted(df["poe"].unique())
+    if poe is None:
+        if len(poes) > 1 and not occurrence:
+            raise ValueError(f"{path} has PoEs {poes}, choose one")
+        poe = poes[-1]
+    keys = ["trt", "mag", "dist"]
+
+    def rates(p):
+        sel = df[np.isclose(df["poe"], p)]
+        if sel.empty:
+            raise ValueError(f"PoE {p} not found in {path}")
+        return sel, sel.set_index(keys)[value_col].pipe(
+            lambda v: -np.log1p(-v))
+
+    target, rate = rates(poe)
+    meta["iml"] = float(target["iml"].iloc[0])
+    meta["poe"] = float(target["poe"].iloc[0])
+
+    if occurrence:
+        lower = [p for p in poes if p < meta["poe"]]
+        if not lower or (meta["poe"] - max(lower)) / meta["poe"] > tol:
+            raise ValueError(
+                f"Occurrence needs the disaggregation at a PoE just below "
+                f"{meta['poe']}, e.g. {0.99 * meta['poe']:.4g}")
+        _, rate_lower = rates(max(lower))
+        rate = (rate - rate_lower.reindex(rate.index, fill_value=0)).clip(0)
+
+    out = rate[rate > 0].rename("rate").reset_index()
+    return out, meta
