@@ -173,3 +173,5 @@ _exports/
 msa-outputs
 poetry.lock
 docs/
+# Local scratch
+tmp/
