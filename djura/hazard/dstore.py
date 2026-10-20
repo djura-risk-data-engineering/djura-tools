@@ -221,6 +221,9 @@ def get_context_from_dstore(dstore_path: Union[str, Path], im_ref: str = None,
         add_data[grp_id] = {
             'gsims': gsims_type_converted,
             'parameters': gsim_parameters,
+            # Parameters needed by this group's GMMs
+            'required-parameters': (cmaker.REQUIRES_DISTANCES
+                                    | cmaker.REQUIRES_RUPTURE_PARAMETERS),
         }
 
         if len(ctx.probs_occur[0]):
@@ -234,8 +237,9 @@ def get_context_from_dstore(dstore_path: Union[str, Path], im_ref: str = None,
 
         ctx_by_grp[grp_id] = ctx
 
-    # Same GSIMs (i.e., required parameters) for all source models
-    req_pars = cmaker.REQUIRES_DISTANCES | cmaker.REQUIRES_RUPTURE_PARAMETERS
+    # Parameters needed by the GMMs of any group
+    req_pars = set().union(*(d['required-parameters']
+                             for d in add_data.values()))
 
     # Logic tree branch weights
     weights = dstore['weights'][:]

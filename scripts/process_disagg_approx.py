@@ -14,6 +14,8 @@ path = Path(__file__).resolve().parent
 sys.path.insert(0, str(path.parent))
 
 from djura.hazard.psha import proc_oq_disaggregation, proc_oq_hazard_curve
+from djura.hazard.disagg_approx import GEOMETRY_KEYS, geometry_from_rules
+from pandas import DataFrame
 
 
 # POEs of interest
@@ -54,22 +56,23 @@ rs_input["site-parameters"] = {
 }
 rs_input["poes"] = {}
 
+# OpenQuake disaggregates on rrup; the other rupture parameters (rjb, rx,
+# ztor, ...) follow Kaklamanos et al. (2011), see geometry_from_rules
+rules = {"all": [{"rake": 0.0}]}
+
 for idx, poe in enumerate(poes):
     disagg = disagg_all["imt_disagg"][imt][
         'mag_dist_hazard_contributions'][f'poe_{poe}']
+    bins = DataFrame({"trt": "all", "mag": disagg['mag'],
+                      "dist": disagg['dist']})
+    geometry = geometry_from_rules(bins, rules)
     ruptures = []
-    for i in range(len(disagg['mag'])):
-        ruptures.append(
-            {
-                "ID": i,
-                "gmms": [0],
-                "rjb": disagg['dist'][i],
-                "mag": disagg['mag'][i],
-                "rake": 0.0,
-                "weight": disagg['hz_cont_occ'][i],
-                # "weight": disagg['hz_cont_exc'][i],
-            }
-        )
+    for i, g in geometry.iterrows():
+        rupture = {"ID": i, "gmms": [0], "mag": g.mag, "rrup": g.dist}
+        rupture.update({k: round(float(g[k]), 3) for k in GEOMETRY_KEYS})
+        rupture["weight"] = disagg['hz_cont_occ'][i]
+        # rupture["weight"] = disagg['hz_cont_exc'][i]
+        ruptures.append(rupture)
     rs_input["poes"][poe] = {
         "ruptures": ruptures,
         "im-star": {"type": imt, "value": imls[idx]},
