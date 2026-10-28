@@ -244,12 +244,17 @@ def get_context_from_dstore(dstore_path: Union[str, Path], im_ref: str = None,
     # Logic tree branch weights
     weights = dstore['weights'][:]
 
+    if 'gweights' in dstore:
+        gsim_weights = dstore['gweights'][:]
+    else:
+        gsim_weights = np.concatenate([cm.wei for cm in cmakers])
+
     return {
         'ctx_by_grp': ctx_by_grp,
         'hazard-curves': curves,
         'lt-weights': weights,
         'gsims': all_gsims,
-        'gsim-weights': dstore['gweights'][:],
+        'gsim-weights': gsim_weights,
         'data': add_data,
         'im_ref': im_ref,
         'imt': imtls,
