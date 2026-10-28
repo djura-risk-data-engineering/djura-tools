@@ -34,7 +34,7 @@ for region in regions:
         dstore = '205'
     elif region == 'lisbon':
         dstore = '206'
-    elif region == 'bolonha':
+    elif region == 'bologna':
         dstore = '207'
 
     # Process the disaggregation excel file from OQ-Engine
