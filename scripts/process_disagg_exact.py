@@ -31,7 +31,7 @@ from djura.hazard.dstore import get_context_from_dstore
 # IM used during conditional selection of OQ engine
 im_ref = "SA(0.5)"
 
-dstore = "85"
+dstore = "11"
 hdf_path = path.parents[5] / f"oqdata/calc_{dstore}.hdf5"
 ctx, oq = get_context_from_dstore(hdf_path, im_ref=im_ref)
 
