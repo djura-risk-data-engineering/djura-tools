@@ -45,7 +45,8 @@ rs_input["imi"] = [
 ]
 rs_input["im_weights"] = [1 / len(rs_input["imi"])] * len(rs_input["imi"])
 rs_input["gmms"] = [
-    {"ID": 0, "SA": {"names": ['KothaEtAl2020ESHM20'], "weights": [1]}}
+    # Same GMM as the PSHA of data/psha
+    {"ID": 0, "SA": {"names": ['BooreEtAl2014'], "weights": [1]}}
 ]
 rs_input["site-parameters"] = {
     "z2pt5": "1.38",
@@ -58,7 +59,9 @@ rs_input["poes"] = {}
 
 # OpenQuake disaggregates on rrup; the other rupture parameters (rjb, rx,
 # ztor, ...) follow Kaklamanos et al. (2011), see geometry_from_rules
-rules = {"all": [{"rake": 0.0}]}
+# Mechanism of the PSHA source model (reverse faults); dip, depths and
+# width follow Kaklamanos et al. (2011) for reverse faulting
+rules = {"all": [{"rake": 90.0}]}
 
 for idx, poe in enumerate(poes):
     disagg = disagg_all["imt_disagg"][imt][

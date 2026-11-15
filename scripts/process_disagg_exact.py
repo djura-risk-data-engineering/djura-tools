@@ -26,13 +26,14 @@ from djura.hazard.dstore import get_context_from_dstore
 # OQ Datastores (.hdf5) are typically located in:
 # C:\Users\<your-username>\oqdata or
 # C:\Users\<your-username>\Documents\oqdata
+# Here the datastore of the example PSHA in data/psha is used
 
 # Conditional IM, does not have to match the conditional
 # IM used during conditional selection of OQ engine
 im_ref = "SA(0.5)"
 
-dstore = "85"
-hdf_path = path.parents[5] / f"oqdata/calc_{dstore}.hdf5"
+dstore = "1"
+hdf_path = path / "data" / "psha" / f"calc_{dstore}.hdf5"
 ctx, oq = get_context_from_dstore(hdf_path, im_ref=im_ref)
 
 # You may choose to save the context into a pickle

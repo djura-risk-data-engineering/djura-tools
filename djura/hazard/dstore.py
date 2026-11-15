@@ -156,6 +156,10 @@ def get_context_from_dstore(dstore_path: Union[str, Path], im_ref: str = None,
     oq = dstore["oqparam"]
     imtls = dict(oq.imtls)
     cmakers = read_cmakers(dstore)
+    # OpenQuake >= 3.24 shares ContextMakers between source groups and
+    # orders them differently; to_array gives one per group, by grp_id
+    if hasattr(cmakers, 'to_array'):
+        cmakers = cmakers.to_array()
     toms = decode(dstore['toms'][:])
 
     # for avgsa
